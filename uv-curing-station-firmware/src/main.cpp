@@ -15,6 +15,8 @@ const int ROTARY_PIN_A = A2; // the first pin connected to the rotary encoder
 const int ROTARY_PIN_B = A3; // the second pin connected to the rotary encoder
 QDecoder qdec;
 
+const int LED_PIN = 9;
+
 U8X8_SSD1306_128X32_UNIVISION_HW_I2C u8x8;
 const uint8_t * DEFAULT_FONT = u8x8_font_torussansbold8_r;
 const uint8_t ICON_PAUSE = 68;
@@ -44,6 +46,14 @@ unsigned long durationLeftoverMillis = 0;
 int stepperSpeedPercentage = 20;
 unsigned long prevTime = 0;
 
+void lightLeds(bool on) {
+  if(on) {
+    digitalWrite(LED_PIN, 1);
+  } else {
+    digitalWrite(LED_PIN, 0);
+  }
+}
+
 void initDisplay() {
   u8x8.begin();
   u8x8.setFont(DEFAULT_FONT);
@@ -51,6 +61,7 @@ void initDisplay() {
 
 void resetAll() {
   mode = MODE_MINUTES_PRINT;
+  lightLeds(false);
   u8x8.setPowerSave(false);
 }
 
@@ -71,9 +82,11 @@ void handleClick() {
     case MODE_RUN:
       mode = MODE_RUN_PAUSED;
       printStateIcon(ICON_PAUSE);
+      lightLeds(false);
       break;
     case MODE_RUN_PAUSED:
       printStateIcon(ICON_PLAY);
+      lightLeds(true);
       prevTime = millis();
       mode = MODE_RUN;
       break;
@@ -112,6 +125,10 @@ void initStepper() {
   myStepper.setMaxSpeed(STEPPER_MAXSPEED);
 }
 
+void initLed() {
+  pinMode(LED_PIN, OUTPUT);
+}
+
 void setup(void)
 {
   Serial.begin(9600);
@@ -119,6 +136,7 @@ void setup(void)
   initDisplay();
   initRotaryEncoder();
   initStepper();
+  initLed();
 }
 
 void printMinutes(bool clearAll) {
@@ -171,14 +189,6 @@ int keepInBoundaries(int value, int min, int max) {
 void adjustStepper() {
   int mappedSpeed = map(stepperSpeedPercentage, 0, 100, 0, STEPPER_MAXSPEED);
 	myStepper.setSpeed(mappedSpeed);
-}
-
-void lightLeds(bool on) {
-  if(on) {
-    Serial.println("TODO LEDS on");
-  } else {
-    Serial.println("TODO LEDS off");
-  }
 }
 
 void prepareRun() {
